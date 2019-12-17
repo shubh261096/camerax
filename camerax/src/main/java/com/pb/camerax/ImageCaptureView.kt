@@ -139,14 +139,14 @@ open class ImageCaptureView @JvmOverloads constructor(
                             Manifest.permission.WRITE_EXTERNAL_STORAGE
                         )
                     ) {
-                        imageCaptureListener?.onFailure(
+                        imageCaptureListener?.onInitFailure(
                             true,
-                            ImageCodeStatus.PermissionInitFailure
+                            ImageCodeStatus.PermissionStorageFailure
                         )
                     } else {
-                        imageCaptureListener?.onFailure(
+                        imageCaptureListener?.onInitFailure(
                             false,
-                            ImageCodeStatus.PermissionInitFailure
+                            ImageCodeStatus.PermissionStorageFailure
                         )
                     }
                 } else if (grantResults.size > 1 && grantResults[1] == PackageManager.PERMISSION_DENIED) {
@@ -155,14 +155,14 @@ open class ImageCaptureView @JvmOverloads constructor(
                             Manifest.permission.CAMERA
                         )
                     ) {
-                        imageCaptureListener?.onFailure(
+                        imageCaptureListener?.onInitFailure(
                             true,
-                            ImageCodeStatus.PermissionInitFailure
+                            ImageCodeStatus.PermissionCameraFailure
                         )
                     } else {
-                        imageCaptureListener?.onFailure(
+                        imageCaptureListener?.onInitFailure(
                             false,
-                            ImageCodeStatus.PermissionInitFailure
+                            ImageCodeStatus.PermissionCameraFailure
                         )
                     }
 
@@ -176,7 +176,10 @@ open class ImageCaptureView @JvmOverloads constructor(
         override fun onImageSaved(photoFile: File) {
             Log.d(TAG, "Photo capture succeeded: ${photoFile.absolutePath}")
 
-            imageCaptureListener?.onSuccess(photoFile.absolutePath)
+            imageCaptureListener?.onCaptureSuccess(
+                photoFile.absolutePath,
+                ImageCodeStatus.CaptureSuccess
+            )
             // If the folder selected is an external media directory, this is unnecessary
             // but otherwise other apps will not be able to access our images unless we
             // scan them using [MediaScannerConnection]
@@ -193,6 +196,7 @@ open class ImageCaptureView @JvmOverloads constructor(
             cause: Throwable?
         ) {
             Log.e(TAG, "Photo capture failed: $message")
+            imageCaptureListener?.onCaptureFailure(message, ImageCodeStatus.CaptureFailure)
             cause?.printStackTrace()
         }
     }
@@ -218,9 +222,9 @@ open class ImageCaptureView @JvmOverloads constructor(
                 imageCapture.takePicture(photoFile, imageSavedListener, metadata)
             }
         } else {
-            imageCaptureListener?.onFailure(
+            imageCaptureListener?.onInitFailure(
                 false,
-                ImageCodeStatus.PermissionInitFailure
+                ImageCodeStatus.PermissionCameraFailure
             )
         }
     }

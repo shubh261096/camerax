@@ -8,7 +8,9 @@ enum class BarCodeStatus {
 }
 
 enum class ImageCodeStatus {
-    Success,
-    PermissionInitFailure,
+    CaptureSuccess,
+    CaptureFailure,
+    PermissionCameraFailure,
+    PermissionStorageFailure,
     CameraInitSuccess
 }

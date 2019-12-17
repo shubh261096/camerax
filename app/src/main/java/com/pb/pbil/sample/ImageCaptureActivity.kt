@@ -36,12 +36,11 @@ class ImageCaptureActivity : AppCompatActivity() {
 
     private var imageCaptureListener: ImageCaptureListener = object : ImageCaptureListener {
 
-        override fun onSuccess(path: String) {
+        override fun onCaptureSuccess(path: String, imageCodeStatus: ImageCodeStatus) {
             Log.i(TAG, path)
         }
 
-        override fun onFailure(isAlwaysDenied: Boolean, imageCodeStatus: ImageCodeStatus) {
-            /** Do handle your permission deny callback here */
+        override fun onInitFailure(isAlwaysDenied: Boolean, imageCodeStatus: ImageCodeStatus) {
             Log.i(TAG, imageCodeStatus.name)
         }
 
@@ -50,6 +49,10 @@ class ImageCaptureActivity : AppCompatActivity() {
             Handler().postDelayed({
                 imageCaptureView.captureImage(this@ImageCaptureActivity)
             }, 5000)
+        }
+
+        override fun onCaptureFailure(error: String, imageCodeStatus: ImageCodeStatus) {
+            Log.i(TAG, error)
         }
     }
 
