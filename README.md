@@ -55,7 +55,7 @@ If someone wants to use my camerax library. Follow these steps given below:
       }
       ```
       
-3. To use Barcode Scanning:
+3. To implement Image Capture:
 
     a. Add these lines in your activity.xml file
     ```android
@@ -87,18 +87,25 @@ If someone wants to use my camerax library. Follow these steps given below:
       ```
       iv. Implement the imageCaptureListener
       ```android
-      private var barCodeReaderListener: BarCodeReaderListener = object : BarCodeReaderListener {
-            override fun onSuccess(qrCode: String, status: BarCodeStatus) {
-                Toast.makeText(this@BarCodeScannerActivity,"Code : $qrCode",Toast.LENGTH_SHORT).show()
-            }
+      private var imageCaptureListener: ImageCaptureListener = object : ImageCaptureListener {
 
-            override fun onFailure(status: BarCodeStatus) {
-                Log.i(TAG, status.name)
-            }
+        override fun onCaptureSuccess(path: String, imageCodeStatus: ImageCodeStatus) {
+            Log.i(TAG, path)
+        }
 
-            override fun onInitFailure(isAlwaysDenied: Boolean) {
-                Toast.makeText(this@BarCodeScannerActivity,"Permission denied always : $isAlwaysDenied",Toast.LENGTH_SHORT).show()
-                Log.i(TAG, "$isAlwaysDenied")
-            }
-      }
+        override fun onInitFailure(isAlwaysDenied: Boolean, imageCodeStatus: ImageCodeStatus) {
+            Log.i(TAG, imageCodeStatus.name)
+        }
+
+        override fun onInitSuccess(imageCodeStatus: ImageCodeStatus) {
+            /** This method #captureImage is called after successful initialization. You can use this method on click of a button */
+            Handler().postDelayed({
+                imageCaptureView.captureImage(this@ImageCaptureActivity)
+            }, 5000)
+        }
+
+        override fun onCaptureFailure(error: String, imageCodeStatus: ImageCodeStatus) {
+            Log.i(TAG, error)
+        }
+    }
       ```
