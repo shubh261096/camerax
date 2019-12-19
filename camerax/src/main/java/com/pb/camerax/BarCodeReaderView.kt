@@ -8,9 +8,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.text.TextUtils
 import android.util.AttributeSet
-import android.util.DisplayMetrics
 import android.util.Rational
-import android.util.Size
 import android.view.TextureView
 import androidx.annotation.NonNull
 import androidx.camera.core.*
@@ -33,15 +31,13 @@ open class BarCodeReaderView @JvmOverloads constructor(
 
     private fun buildUseCases() {
 
-        val metrics = DisplayMetrics().also { display.getRealMetrics(it) }
-        val screenSize = Size(metrics.widthPixels, metrics.heightPixels)
-        val screenAspectRatio = Rational(metrics.widthPixels, metrics.heightPixels)
+        val screenAspectRatio = Rational(width, height)
+        val screenTargetRotation = display.rotation
 
         //Preview
         val previewConfig = PreviewConfig.Builder().apply {
-            setTargetResolution(screenSize)
             setTargetAspectRatio(screenAspectRatio)
-            setTargetRotation(display.rotation)
+            setTargetRotation(screenTargetRotation)
             setLensFacing(lensFacing)
         }.build()
 
@@ -50,9 +46,8 @@ open class BarCodeReaderView @JvmOverloads constructor(
 
         //ImageAnalyze
         val analysisConfig = ImageAnalysisConfig.Builder().apply {
-            setTargetResolution(screenSize)
             setTargetAspectRatio(screenAspectRatio)
-            setTargetRotation(display.rotation)
+            setTargetRotation(screenTargetRotation)
             setLensFacing(lensFacing)
             // Use a worker thread for image analysis to prevent preview glitches
             val analyzerThread = HandlerThread("BarCodeAnalyzer").apply { start() }

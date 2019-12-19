@@ -34,15 +34,13 @@ open class ImageCaptureView @JvmOverloads constructor(
 
     private fun buildUseCases() {
 
-        val metrics = DisplayMetrics().also { display.getRealMetrics(it) }
-        val screenSize = Size(metrics.widthPixels, metrics.heightPixels)
-        val screenAspectRatio = Rational(metrics.widthPixels, metrics.heightPixels)
+        val screenAspectRatio = Rational(width, height)
+        val screenTargetRotation = display.rotation
 
         //Preview
         val previewConfig = PreviewConfig.Builder().apply {
-            setTargetResolution(screenSize)
             setTargetAspectRatio(screenAspectRatio)
-            setTargetRotation(display.rotation)
+            setTargetRotation(screenTargetRotation)
             setLensFacing(lensFacing)
         }.build()
 
@@ -52,15 +50,10 @@ open class ImageCaptureView @JvmOverloads constructor(
 
         // Set up the capture use case to allow users to take photos
         val imageCaptureConfig = ImageCaptureConfig.Builder().apply {
-            setTargetResolution(screenSize)
-            setCaptureMode(ImageCapture.CaptureMode.MAX_QUALITY)
-            // We request aspect ratio but no resolution to match preview config but letting
-            // CameraX optimize for whatever specific resolution best fits requested capture mode
             setTargetAspectRatio(screenAspectRatio)
-            // Set initial target rotation, we will have to call this again if rotation changes
-            // during the lifecycle of this use case
-            setTargetRotation(display.rotation)
+            setTargetRotation(screenTargetRotation)
             setLensFacing(lensFacing)
+            setCaptureMode(ImageCapture.CaptureMode.MAX_QUALITY)
         }.build()
 
 
