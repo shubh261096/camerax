@@ -6,10 +6,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.media.MediaScannerConnection
 import android.text.TextUtils
-import android.util.AttributeSet
-import android.util.Log
-import android.util.Rational
-import android.util.Size
+import android.util.*
 import android.view.TextureView
 import android.webkit.MimeTypeMap
 import androidx.annotation.NonNull
@@ -37,11 +34,15 @@ open class ImageCaptureView @JvmOverloads constructor(
 
     private fun buildUseCases() {
 
+        val metrics = DisplayMetrics().also { display.getRealMetrics(it) }
+        val screenSize = Size(metrics.widthPixels, metrics.heightPixels)
+        val screenAspectRatio = Rational(metrics.widthPixels, metrics.heightPixels)
+
         //Preview
         val previewConfig = PreviewConfig.Builder().apply {
-            setTargetAspectRatio(Rational(width, height))
+            setTargetResolution(screenSize)
+            setTargetAspectRatio(screenAspectRatio)
             setTargetRotation(display.rotation)
-            setTargetResolution(Size(width, height))
             setLensFacing(lensFacing)
         }.build()
 
@@ -51,15 +52,15 @@ open class ImageCaptureView @JvmOverloads constructor(
 
         // Set up the capture use case to allow users to take photos
         val imageCaptureConfig = ImageCaptureConfig.Builder().apply {
-            setLensFacing(lensFacing)
+            setTargetResolution(screenSize)
             setCaptureMode(ImageCapture.CaptureMode.MAX_QUALITY)
-            setTargetResolution(Size(width, height))
             // We request aspect ratio but no resolution to match preview config but letting
             // CameraX optimize for whatever specific resolution best fits requested capture mode
-            setTargetAspectRatio(Rational(width, height))
+            setTargetAspectRatio(screenAspectRatio)
             // Set initial target rotation, we will have to call this again if rotation changes
             // during the lifecycle of this use case
             setTargetRotation(display.rotation)
+            setLensFacing(lensFacing)
         }.build()
 
 

@@ -8,7 +8,9 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.text.TextUtils
 import android.util.AttributeSet
+import android.util.DisplayMetrics
 import android.util.Rational
+import android.util.Size
 import android.view.TextureView
 import androidx.annotation.NonNull
 import androidx.camera.core.*
@@ -26,18 +28,21 @@ open class BarCodeReaderView @JvmOverloads constructor(
     private var preview: Preview? = null
     private var imageAnalyzer: ImageAnalysis? = null
     var barCodeReaderListener: BarCodeReaderListener? = null
+    private var lensFacing: CameraX.LensFacing? = null
     private var isSuccess = false
 
     private fun buildUseCases() {
 
+        val metrics = DisplayMetrics().also { display.getRealMetrics(it) }
+        val screenSize = Size(metrics.widthPixels, metrics.heightPixels)
+        val screenAspectRatio = Rational(metrics.widthPixels, metrics.heightPixels)
+
         //Preview
         val previewConfig = PreviewConfig.Builder().apply {
-            setTargetAspectRatio(Rational(width, height))
+            setTargetResolution(screenSize)
+            setTargetAspectRatio(screenAspectRatio)
             setTargetRotation(display.rotation)
-            if (TextUtils.equals(config.lensFacing, "FRONT"))
-                setLensFacing(CameraX.LensFacing.FRONT)
-            else
-                setLensFacing(CameraX.LensFacing.BACK)
+            setLensFacing(lensFacing)
         }.build()
 
         preview = AutoFitPreviewBuilder.build(previewConfig, this)
@@ -45,19 +50,15 @@ open class BarCodeReaderView @JvmOverloads constructor(
 
         //ImageAnalyze
         val analysisConfig = ImageAnalysisConfig.Builder().apply {
-            setTargetAspectRatio(Rational(width, height))
-            if (TextUtils.equals(config.lensFacing, "FRONT"))
-                setLensFacing(CameraX.LensFacing.FRONT)
-            else
-                setLensFacing(CameraX.LensFacing.BACK)
+            setTargetResolution(screenSize)
+            setTargetAspectRatio(screenAspectRatio)
+            setTargetRotation(display.rotation)
+            setLensFacing(lensFacing)
             // Use a worker thread for image analysis to prevent preview glitches
-            val analyzerThread = HandlerThread("QRAnalyzer").apply { start() }
+            val analyzerThread = HandlerThread("BarCodeAnalyzer").apply { start() }
             setCallbackHandler(Handler(analyzerThread.looper))
             // In our analysis, we care more about the latest image than analyzing *every* image
             setImageReaderMode(config.readerMode)
-            // Set initial target rotation, we will have to call this again if rotation changes
-            // during the lifecycle of this use case
-            setTargetRotation(display.rotation)
         }.build()
 
         imageAnalyzer = ImageAnalysis(analysisConfig)
@@ -82,6 +83,10 @@ open class BarCodeReaderView @JvmOverloads constructor(
         lifecycleOwner: LifecycleOwner,
         conf: BarCodeCameraConfiguration = BarCodeCameraConfiguration()
     ) {
+        this.lensFacing = if (TextUtils.equals(conf.lensFacing, "FRONT"))
+            CameraX.LensFacing.FRONT
+        else
+            CameraX.LensFacing.BACK
         this.lifecycleOwner = lifecycleOwner
         this.config = conf
         if (PermissionUtils.isCameraPermissionGranted(activity)) {
