@@ -1,5 +1,6 @@
 package com.pb.pbil.sample
 
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
@@ -36,8 +37,8 @@ class ImageCaptureActivity : AppCompatActivity() {
 
     private var imageCaptureListener: ImageCaptureListener = object : ImageCaptureListener {
 
-        override fun onCaptureSuccess(path: String, imageCodeStatus: ImageCodeStatus) {
-            Log.i(TAG, path)
+        override fun onCaptureSuccess(bitmap: Bitmap, imageCodeStatus: ImageCodeStatus) {
+            Log.i(TAG, bitmap.toString())
         }
 
         override fun onInitFailure(isAlwaysDenied: Boolean, imageCodeStatus: ImageCodeStatus) {

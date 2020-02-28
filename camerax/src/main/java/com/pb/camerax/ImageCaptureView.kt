@@ -4,17 +4,24 @@ import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.media.MediaScannerConnection
 import android.text.TextUtils
-import android.util.*
+import android.util.AttributeSet
+import android.util.Log
+import android.util.Rational
 import android.view.TextureView
 import android.webkit.MimeTypeMap
 import androidx.annotation.NonNull
 import androidx.camera.core.*
 import androidx.core.app.ActivityCompat
+import androidx.exifinterface.media.ExifInterface
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
 import java.io.File
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -159,7 +166,6 @@ open class ImageCaptureView @JvmOverloads constructor(
                             ImageCodeStatus.PermissionCameraFailure
                         )
                     }
-
                 }
         }
     }
@@ -170,8 +176,13 @@ open class ImageCaptureView @JvmOverloads constructor(
         override fun onImageSaved(photoFile: File) {
             Log.d(TAG, "Photo capture succeeded: ${photoFile.absolutePath}")
 
+            val finalBitmap = rotateImageIfRequired(
+                BitmapFactory.decodeFile(photoFile.absolutePath),
+                photoFile.absolutePath
+            )
+
             imageCaptureListener?.onCaptureSuccess(
-                photoFile.absolutePath,
+                finalBitmap,
                 ImageCodeStatus.CaptureSuccess
             )
             // If the folder selected is an external media directory, this is unnecessary
@@ -246,6 +257,38 @@ open class ImageCaptureView @JvmOverloads constructor(
             }
             return if (mediaDir != null && mediaDir.exists())
                 mediaDir else appContext.filesDir
+        }
+
+        private fun flipImage(src: Bitmap): Bitmap {
+            // create new matrix for transformation
+            val matrix = Matrix()
+            matrix.preScale(-1.0f, 1.0f)
+            // return transformed image
+            return Bitmap.createBitmap(src, 0, 0, src.width, src.height, matrix, true)
+        }
+
+        @Throws(IOException::class)
+        fun rotateImageIfRequired(img: Bitmap, path: String): Bitmap {
+            val ei = ExifInterface(path)
+            val orientation: Int =
+                ei.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+            return when (orientation) {
+                ExifInterface.ORIENTATION_ROTATE_90 -> rotateImage(img, 90)
+                ExifInterface.ORIENTATION_ROTATE_180 -> rotateImage(img, 180)
+                ExifInterface.ORIENTATION_ROTATE_270 -> rotateImage(img, 270)
+                ExifInterface.ORIENTATION_FLIP_VERTICAL -> rotateImage(img, 180)
+                ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> flipImage(img)
+                else -> img
+            }
+        }
+
+        private fun rotateImage(img: Bitmap, degree: Int): Bitmap {
+            val matrix = Matrix()
+            matrix.postRotate(degree.toFloat())
+            val rotatedImg =
+                Bitmap.createBitmap(img, 0, 0, img.width, img.height, matrix, true)
+            img.recycle()
+            return flipImage(rotatedImg)
         }
     }
 

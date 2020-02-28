@@ -7,8 +7,7 @@ import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.HandlerThread
 import android.text.TextUtils
-import android.util.AttributeSet
-import android.util.Rational
+import android.util.*
 import android.view.TextureView
 import androidx.annotation.NonNull
 import androidx.camera.core.*
@@ -29,15 +28,16 @@ open class BarCodeReaderView @JvmOverloads constructor(
     private var lensFacing: CameraX.LensFacing? = null
     private var isSuccess = false
 
-    private fun buildUseCases() {
+    private fun buildUseCases(activity: Activity) {
 
-        val screenAspectRatio = Rational(width, height)
-        val screenTargetRotation = display.rotation
-
+        val metrics = DisplayMetrics().also { display.getRealMetrics(it) }
+        val screenSize = Size(metrics.widthPixels, metrics.heightPixels)
+        val screenAspectRatio = Rational(1, 1)
         //Preview
         val previewConfig = PreviewConfig.Builder().apply {
+            setTargetResolution(screenSize)
             setTargetAspectRatio(screenAspectRatio)
-            setTargetRotation(screenTargetRotation)
+            setTargetRotation(display.rotation)
             setLensFacing(lensFacing)
         }.build()
 
@@ -46,8 +46,9 @@ open class BarCodeReaderView @JvmOverloads constructor(
 
         //ImageAnalyze
         val analysisConfig = ImageAnalysisConfig.Builder().apply {
+            setTargetResolution(screenSize)
             setTargetAspectRatio(screenAspectRatio)
-            setTargetRotation(screenTargetRotation)
+            setTargetRotation(display.rotation)
             setLensFacing(lensFacing)
             // Use a worker thread for image analysis to prevent preview glitches
             val analyzerThread = HandlerThread("BarCodeAnalyzer").apply { start() }
@@ -58,15 +59,50 @@ open class BarCodeReaderView @JvmOverloads constructor(
 
         imageAnalyzer = ImageAnalysis(analysisConfig)
 
-        imageAnalyzer?.apply {
+        /** Uncomment below lines to use ZXing Library for analysis */
+        /*imageAnalyzer?.apply {
             analyzer = BarCodeAnalyzer().apply {
                 onFrameAnalyzed { qrCode, status, _, _, _, _ ->
                     if (qrCode != null && !isSuccess) {
                         barCodeReaderListener?.onSuccess(qrCode, status)
-                        isSuccess = true // This is done so that onSuccess invokes only onetime
+                        reset(true) // This is done so that onSuccess invokes only onetime
                     } else {
                         barCodeReaderListener?.onFailure(status)
                     }
+                }
+            }
+        }*/
+
+        /** Uncomment below lines to use Firebase MLKit Vision Library for analysis */
+        /*imageAnalyzer?.apply {
+            analyzer = FirebaseAnalyzer { qrCodes ->
+                qrCodes.forEach {
+                    it.rawValue?.let { it1 ->
+                        if (!isSuccess) {
+                            barCodeReaderListener?.onSuccess(it1, BarCodeStatus.Success)
+                            reset(true) // This is done so that onSuccess invokes only onetime
+                        }
+                    }
+                }
+            }
+        }*/
+
+        /** Uncomment below lines to use GoogleVision Library for analysis */
+        /*imageAnalyzer?.apply {
+            analyzer = GoogleVisionAnalyzer(activity) { qrCodes ->
+                if (!isSuccess) {
+                    barCodeReaderListener?.onSuccess(qrCodes, BarCodeStatus.Success)
+                    reset(true) // This is done so that onSuccess invokes only onetime
+                }
+            }
+        }*/
+
+        /** Uncomment below lines to use ZBar Library for analysis */
+        imageAnalyzer?.apply {
+            analyzer = ZBarAnalyzer { qrCodes ->
+                if (!isSuccess) {
+                    barCodeReaderListener?.onSuccess(qrCodes, BarCodeStatus.Success)
+                    reset(true) // This is done so that onSuccess invokes only onetime
                 }
             }
         }
@@ -78,6 +114,7 @@ open class BarCodeReaderView @JvmOverloads constructor(
         lifecycleOwner: LifecycleOwner,
         conf: BarCodeCameraConfiguration = BarCodeCameraConfiguration()
     ) {
+        reset(false)
         this.lensFacing = if (TextUtils.equals(conf.lensFacing, "FRONT"))
             CameraX.LensFacing.FRONT
         else
@@ -85,16 +122,20 @@ open class BarCodeReaderView @JvmOverloads constructor(
         this.lifecycleOwner = lifecycleOwner
         this.config = conf
         if (PermissionUtils.isCameraPermissionGranted(activity)) {
-            startCamera()
+            startCamera(activity)
         } else {
             PermissionUtils.grantCameraPermission(activity, fragment)
         }
     }
 
-    private fun startCamera() {
+    private fun reset(value: Boolean) {
+        this.isSuccess = value
+    }
+
+    private fun startCamera(activity: Activity) {
         this.post {
             CameraX.unbindAll()
-            buildUseCases()
+            buildUseCases(activity)
             CameraX.bindToLifecycle(
                 this.lifecycleOwner,
                 preview,
@@ -119,7 +160,7 @@ open class BarCodeReaderView @JvmOverloads constructor(
         when (requestCode) {
             PermissionUtils.PERMISSIONS_REQUEST_CAMERA ->
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    startCamera()
+                    startCamera(activity)
                 } else if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_DENIED) {
                     if (!ActivityCompat.shouldShowRequestPermissionRationale(
                             activity,

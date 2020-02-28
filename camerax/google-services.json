@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "321513422081",
+    "firebase_url": "https://camerax-b3f60.firebaseio.com",
+    "project_id": "camerax-b3f60",
+    "storage_bucket": "camerax-b3f60.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:321513422081:android:8e01e3e629211eeac32f00",
+        "android_client_info": {
+          "package_name": "com.pb.camerax"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "321513422081-6p20973bo3a2pbo71ssvev0unbgmbamp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB013bb7hOe3hEBjYdcmELd9SK-UuOCP8I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "321513422081-6p20973bo3a2pbo71ssvev0unbgmbamp.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
