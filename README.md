@@ -1,7 +1,13 @@
 # CameraX Library 
-This Sample uses my custom camerax library where BarCode Analyzer and ImageCapture is used
-
+This Sample uses my custom camerax library where BarCode Analyzer and ImageCapture is used.
 This project will directly run the application.
+
+## Feature Update
+Now you can use QRCode/Barcode Scanning via four of the libraries added. You just have to uncomment lines in my library.
+1. ZXing
+2. ZBar
+3. Firebase MLKit Vision
+4. Google Vision
 
 ## Usage
 If someone wants to use my camerax library. Follow these steps given below:
