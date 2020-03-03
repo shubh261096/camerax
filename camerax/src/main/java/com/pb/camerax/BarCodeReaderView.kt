@@ -175,4 +175,11 @@ open class BarCodeReaderView @JvmOverloads constructor(
         }
     }
 
+    /** Function to close camera. It will unbind all the use-case attached.
+     * Please Note: It will retain the last frame.
+     **/
+    fun closeCamera() {
+        CameraX.unbindAll()
+    }
+
 }
